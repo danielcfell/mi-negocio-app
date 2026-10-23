@@ -1,19 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
+import { Nunito, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const nunito = localFont({
-  src: "../fonts/nunito.woff2",
+const nunito = Nunito({
   variable: "--font-nunito",
-  weight: "200 1000",
-  display: "swap",
+  subsets: ["latin"],
 });
 
-const playfair = localFont({
-  src: "../fonts/playfair.woff2",
+const playfair = Playfair_Display({
   variable: "--font-playfair",
-  weight: "400 900",
-  display: "swap",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
