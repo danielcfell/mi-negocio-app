@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
+/* Paleta: lila, rosa suave, blanco y detalles dorados */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf8fd;
+  --foreground: #3a2354;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-lila-50: #f7f3fc;
+  --color-lila-100: #efe7f9;
+  --color-lila-200: #e0d0f3;
+  --color-lila-300: #c9aee9;
+  --color-lila-400: #ad87db;
+  --color-lila-500: #9163c9;
+  --color-lila-600: #7a4bb0;
+  --color-lila-700: #633b90;
+  --color-lila-800: #4f2f73;
+  --color-lila-900: #3a2354;
+
+  --color-rosa-50: #fff1f6;
+  --color-rosa-100: #ffe0ec;
+  --color-rosa-200: #fbc2d8;
+  --color-rosa-300: #f5a0c2;
+  --color-rosa-400: #ec78a8;
+  --color-rosa-500: #de5a91;
+
+  --color-dorado-100: #f7edd0;
+  --color-dorado-300: #e6cf8c;
+  --color-dorado-400: #d4b25f;
+  --color-dorado-500: #c19a3e;
+  --color-dorado-600: #a07e2d;
+
+  --color-ganancia: #2f8f6b;
+  --color-deuda: #c2456b;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #f3e8fb 0%, transparent 60%),
+    radial-gradient(900px 400px at 100% 0%, #ffe9f1 0%, transparent 55%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+}
+
+/* Tarjetas y campos reutilizables */
+@layer components {
+  .tarjeta {
+    @apply rounded-3xl bg-white/90 p-4 shadow-[0_6px_24px_-12px_rgba(122,75,176,0.35)] ring-1 ring-lila-100;
+  }
+  .campo {
+    @apply w-full rounded-2xl border border-lila-200 bg-white px-4 py-3 text-base text-lila-900 outline-none placeholder:text-lila-300 focus:border-lila-400 focus:ring-4 focus:ring-lila-100;
+  }
+  .etiqueta {
+    @apply mb-1 block text-sm font-semibold text-lila-700;
+  }
+  .boton {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-lila-500 to-rosa-400 px-5 py-3.5 text-base font-bold text-white shadow-md shadow-lila-300/50 transition active:scale-[0.98] disabled:opacity-60;
+  }
+  .boton-suave {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-lila-100 px-4 py-2.5 text-sm font-bold text-lila-700 transition active:scale-[0.98];
+  }
+  .detalle-dorado {
+    @apply h-0.5 w-10 rounded-full bg-dorado-400;
+  }
 }
