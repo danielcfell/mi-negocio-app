@@ -46,17 +46,19 @@ create table public.gastos (
   created_at  timestamptz not null default now()
 );
 
+-- Dinero personal: 'retiro' = saqué para mí, 'aporte' = puse dinero en el negocio
 create table public.retiros (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
   fecha       date not null default current_date,
   monto       numeric(12,2) not null check (monto >= 0),
   nota        text,
+  tipo        text not null default 'retiro' check (tipo in ('retiro', 'aporte')),
   created_at  timestamptz not null default now()
 );
 
-create index on public.productos (compra_id);
-create index on public.ventas (producto_id);
+create index on public.productos (compra_id, user_id);
+create index on public.ventas (producto_id, user_id);
 create index on public.ventas (fecha);
 create index on public.gastos (fecha);
 create index on public.compras (user_id);
@@ -64,6 +66,16 @@ create index on public.productos (user_id);
 create index on public.ventas (user_id);
 create index on public.gastos (user_id);
 create index on public.retiros (user_id);
+
+-- Cada producto y venta solo puede apuntar a filas del mismo usuario
+alter table public.compras   add constraint compras_id_user_unique   unique (id, user_id);
+alter table public.productos add constraint productos_id_user_unique unique (id, user_id);
+alter table public.productos
+  add constraint productos_compra_mismo_usuario
+  foreign key (compra_id, user_id) references public.compras (id, user_id) on delete cascade;
+alter table public.ventas
+  add constraint ventas_producto_mismo_usuario
+  foreign key (producto_id, user_id) references public.productos (id, user_id) on delete restrict;
 
 -- Un abono no puede superar el total de la venta
 alter table public.ventas
@@ -83,6 +95,9 @@ begin
   end if;
 
   select cantidad into comprado from public.productos where id = new.producto_id;
+  if comprado is null then
+    raise exception 'Producto no encontrado';
+  end if;
 
   select coalesce(sum(cantidad), 0) into vendido
   from public.ventas
@@ -100,6 +115,29 @@ $$;
 create trigger ventas_validar_stock
   before insert or update on public.ventas
   for each row execute function public.validar_stock();
+
+-- Al corregir un producto, la cantidad no puede quedar por debajo de lo ya vendido
+create or replace function public.validar_cantidad_producto() returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  vendido integer;
+begin
+  select coalesce(sum(cantidad), 0) into vendido
+  from public.ventas
+  where producto_id = new.id and not anulada;
+
+  if new.cantidad < vendido then
+    raise exception 'Ya vendiste % unidades; la cantidad no puede ser menor', vendido;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger productos_validar_cantidad
+  before update of cantidad on public.productos
+  for each row execute function public.validar_cantidad_producto();
 
 -- ============ SEGURIDAD (RLS) ============
 
@@ -211,10 +249,10 @@ as $$
   caja as (
     select
       (select coalesce(sum(abonado), 0) from public.ventas where not anulada)
+      + (select coalesce(sum(case when tipo = 'aporte' then monto else -monto end), 0) from public.retiros)
       - (select coalesce(sum(p.cantidad * p.costo_unitario), 0) from public.productos p)
       - (select coalesce(sum(transporte), 0) from public.compras)
-      - (select coalesce(sum(monto), 0) from public.gastos)
-      - (select coalesce(sum(monto), 0) from public.retiros) as disponible
+      - (select coalesce(sum(monto), 0) from public.gastos) as disponible
   )
   select
     vp.ventas,

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { dinero, hoy } from "@/lib/format";
+import { centavos, dinero, hoy, mensajeError, numero, numeroO0 } from "@/lib/format";
 import type { ProductoStock } from "@/lib/types";
 
 export default function FormVenta({
@@ -28,10 +28,10 @@ export default function FormVenta({
 
   const producto = productos.find((p) => p.id === productoId);
   const unidades = parseInt(cantidad) || 0;
-  const precioNum = parseFloat(precio) || 0;
-  const total = unidades * precioNum;
-  const abonado =
-    pago === "completo" ? total : pago === "abono" ? Math.min(parseFloat(abono) || 0, total) : 0;
+  const precioNum = centavos(numeroO0(precio));
+  const total = centavos(unidades * precioNum);
+  const abonoNum = centavos(numeroO0(abono));
+  const abonado = pago === "completo" ? total : pago === "abono" ? abonoNum : 0;
   const ganancia = producto ? unidades * (precioNum - producto.costo_real) : 0;
 
   function elegirProducto(id: string) {
@@ -46,7 +46,12 @@ export default function FormVenta({
     if (!producto) return;
     if (unidades < 1) return setError("La cantidad debe ser al menos 1.");
     if (unidades > producto.stock) return setError(`Solo quedan ${producto.stock} en stock.`);
-    if (pago === "abono" && !(abonado > 0)) return setError("Escribe cuánto abonó.");
+    if (!Number.isFinite(numero(precio))) return setError("Escribe un precio válido, por ejemplo 8 o 8,50.");
+    if (pago === "abono") {
+      if (!Number.isFinite(numero(abono)) || !(abonoNum > 0)) return setError("Escribe cuánto abonó.");
+      if (abonoNum > total) return setError(`El abono no puede ser mayor que el total (${dinero(total)}).`);
+      if (abonoNum === total) return setError("Si pagó todo, elige “Pagó todo”.");
+    }
     if (pago !== "completo" && !cliente.trim())
       return setError("Anota el nombre de quien te debe.");
 
@@ -60,7 +65,7 @@ export default function FormVenta({
       abonado,
     });
     if (error) {
-      setError(error.message);
+      setError(mensajeError(error));
       setGuardando(false);
       return;
     }
@@ -111,10 +116,9 @@ export default function FormVenta({
             </label>
             <input
               id="precio"
-              type="number"
+              type="text"
               inputMode="decimal"
-              min="0"
-              step="0.01"
+              autoComplete="off"
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
               className="campo"
@@ -168,10 +172,10 @@ export default function FormVenta({
             </label>
             <input
               id="abono"
-              type="number"
+              type="text"
               inputMode="decimal"
-              min="0"
-              step="0.01"
+              autoComplete="off"
+              placeholder="0,00"
               value={abono}
               onChange={(e) => setAbono(e.target.value)}
               className="campo"
@@ -200,7 +204,7 @@ export default function FormVenta({
         </div>
         <div className="flex justify-between">
           <span className="text-lila-600">Queda por cobrar</span>
-          <strong className="text-deuda">{dinero(total - abonado)}</strong>
+          <strong className="text-deuda">{dinero(Math.max(0, total - abonado))}</strong>
         </div>
         <div className="flex justify-between border-t border-dorado-300/60 pt-1">
           <span className="text-lila-600">Tu ganancia en esta venta</span>

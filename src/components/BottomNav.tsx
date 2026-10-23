@@ -9,7 +9,7 @@ const enlaces = [
   { href: "/productos", texto: "Productos", Icono: Package },
   { href: "/ventas/nueva", texto: "Vender", Icono: ShoppingBag, destacado: true },
   { href: "/ventas", texto: "Ventas", Icono: ReceiptText },
-  { href: "/gastos", texto: "Gastos", Icono: Wallet },
+  { href: "/gastos", texto: "Dinero", Icono: Wallet },
 ];
 
 export default function BottomNav() {

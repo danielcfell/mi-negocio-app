@@ -40,6 +40,7 @@ export type Retiro = {
   fecha: string;
   monto: number;
   nota: string | null;
+  tipo: "retiro" | "aporte";
 };
 
 export type Resumen = {

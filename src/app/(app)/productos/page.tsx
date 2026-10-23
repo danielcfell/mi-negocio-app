@@ -102,14 +102,22 @@ function TarjetaProducto({ p }: { p: ProductoStock }) {
           >
             Gano {dinero(p.ganancia_unidad)} c/u
           </span>
-          {!agotado && (
+          <div className="flex items-center gap-2">
             <Link
-              href={`/ventas/nueva?producto=${p.id}`}
-              className="rounded-full bg-gradient-to-r from-lila-500 to-rosa-400 px-4 py-1.5 text-xs font-bold text-white"
+              href={`/productos/${p.id}`}
+              className="rounded-full px-3 py-1.5 text-xs font-bold text-lila-500 ring-1 ring-lila-200"
             >
-              Vender
+              Corregir
             </Link>
-          )}
+            {!agotado && (
+              <Link
+                href={`/ventas/nueva?producto=${p.id}`}
+                className="rounded-full bg-gradient-to-r from-lila-500 to-rosa-400 px-4 py-1.5 text-xs font-bold text-white"
+              >
+                Vender
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </li>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { centavos, dinero, mensajeError, numero } from "@/lib/format";
 import type { VentaDetalle } from "@/lib/types";
 
 export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
@@ -13,18 +14,20 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
   const [ocupado, setOcupado] = useState(false);
 
   async function abonar() {
-    const valor = parseFloat(monto);
-    if (!(valor > 0)) return setError("Escribe un monto mayor a 0.");
-    if (valor > venta.saldo + 0.001) return setError("El abono supera lo que debe.");
+    const valor = centavos(numero(monto));
+    if (!Number.isFinite(valor) || !(valor > 0)) return setError("Escribe un monto mayor a 0.");
+    if (valor > centavos(venta.saldo)) {
+      return setError(`El abono supera lo que debe (${dinero(venta.saldo)}).`);
+    }
 
     setOcupado(true);
     setError(null);
     const { error } = await createClient()
       .from("ventas")
-      .update({ abonado: Number((venta.abonado + valor).toFixed(2)) })
+      .update({ abonado: centavos(Number(venta.abonado) + valor) })
       .eq("id", venta.id);
     setOcupado(false);
-    if (error) return setError(error.message);
+    if (error) return setError(mensajeError(error));
     setAbonando(false);
     setMonto("");
     router.refresh();
@@ -38,7 +41,7 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
       .update({ anulada: true })
       .eq("id", venta.id);
     setOcupado(false);
-    if (error) return setError(error.message);
+    if (error) return setError(mensajeError(error));
     router.refresh();
   }
 
@@ -48,17 +51,26 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
         <div className="flex gap-2">
           <input
             aria-label="Monto del abono"
-            type="number"
+            type="text"
             inputMode="decimal"
-            min="0"
-            step="0.01"
+            autoComplete="off"
+            autoFocus
             value={monto}
             onChange={(e) => setMonto(e.target.value)}
-            placeholder={`Hasta ${venta.saldo.toFixed(2)}`}
+            placeholder={`Hasta ${dinero(venta.saldo)}`}
             className="campo py-2"
           />
           <button onClick={abonar} disabled={ocupado} className="boton-suave shrink-0">
             Guardar
+          </button>
+          <button
+            onClick={() => {
+              setAbonando(false);
+              setError(null);
+            }}
+            className="shrink-0 px-2 text-sm font-semibold text-lila-400"
+          >
+            Cancelar
           </button>
         </div>
       ) : (

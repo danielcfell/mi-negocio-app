@@ -16,9 +16,9 @@ export default async function Inicio() {
     {
       titulo: "Dinero disponible",
       valor: r?.dinero_disponible,
-      nota: "Cobrado menos compras, gastos y retiros",
+      nota: "Cobrado y lo que pusiste, menos compras, gastos y retiros",
       Icono: Wallet,
-      color: "text-lila-700",
+      color: (r?.dinero_disponible ?? 0) < 0 ? "text-deuda" : "text-lila-700",
     },
     {
       titulo: "Mercadería en stock",
@@ -66,12 +66,24 @@ export default async function Inicio() {
         </p>
       )}
 
+      {r && r.dinero_disponible < 0 && (
+        <Link
+          href="/gastos"
+          className="block rounded-2xl bg-dorado-100/70 px-4 py-3 text-sm text-lila-800 ring-1 ring-dorado-300"
+        >
+          Tu dinero disponible sale negativo porque compraste con dinero tuyo. Regístralo en{" "}
+          <strong>Dinero → Puse dinero</strong> para que cuadre.
+        </Link>
+      )}
+
       <section className="grid grid-cols-2 gap-3">
         {tarjetas.map(({ titulo, valor, nota, Icono, color }) => (
           <div key={titulo} className="tarjeta">
             <Icono className="mb-2 h-5 w-5 text-dorado-500" />
             <p className="text-sm font-semibold text-lila-600">{titulo}</p>
-            <p className={`text-2xl font-extrabold ${color}`}>{dinero(valor)}</p>
+            <p className={`text-[clamp(1.05rem,5.2vw,1.5rem)] font-extrabold tracking-tight tabular-nums ${color}`}>
+              {dinero(valor)}
+            </p>
             <p className="mt-1 text-xs leading-snug text-lila-400">{nota}</p>
           </div>
         ))}
