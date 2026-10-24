@@ -81,7 +81,7 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
 
   return (
     <div className="space-y-4">
-      <form onSubmit={guardar} className="tarjeta space-y-3">
+      <form onSubmit={guardar} noValidate className="tarjeta space-y-3">
         <div>
           <label className="etiqueta" htmlFor="nombre">
             Nombre
@@ -98,8 +98,6 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
               id="cantidad"
               type="number"
               inputMode="numeric"
-              min={Math.max(1, vendido)}
-              step="1"
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               className="campo px-3"
@@ -147,7 +145,7 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
         </button>
       </form>
 
-      {vendido === 0 ? (
+      {producto.num_ventas === 0 ? (
         <button
           onClick={eliminar}
           disabled={ocupado}
@@ -157,8 +155,8 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
         </button>
       ) : (
         <p className="text-center text-xs text-lila-400">
-          Este producto ya tiene ventas, por eso no se puede eliminar. Si una venta fue un error,
-          anúlala en Ventas.
+          Este producto tiene ventas registradas (aunque estén anuladas), por eso no se puede
+          eliminar y queda en tu historial.
         </p>
       )}
     </div>

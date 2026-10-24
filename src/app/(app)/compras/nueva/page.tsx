@@ -138,7 +138,7 @@ export default function NuevaCompra() {
   }
 
   return (
-    <form onSubmit={guardar} className="space-y-5">
+    <form onSubmit={guardar} noValidate className="space-y-5">
       <header>
         <h1 className="text-2xl font-bold text-lila-800">Nueva compra</h1>
         <div className="detalle-dorado mt-2" />

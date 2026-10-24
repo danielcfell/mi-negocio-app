@@ -8,7 +8,7 @@ import { centavos, hoy, mensajeError, numero } from "@/lib/format";
 type Tipo = "gasto" | "retiro" | "aporte";
 
 const opciones: { valor: Tipo; nombre: string }[] = [
-  { valor: "gasto", nombre: "Gasto del negocio" },
+  { valor: "gasto", nombre: "Gasto" },
   { valor: "retiro", nombre: "Saqué para mí" },
   { valor: "aporte", nombre: "Puse dinero" },
 ];
@@ -55,7 +55,7 @@ export default function FormGasto() {
   }
 
   return (
-    <form onSubmit={guardar} className="tarjeta space-y-3">
+    <form onSubmit={guardar} noValidate className="tarjeta space-y-3">
       <div className="grid grid-cols-3 gap-2">
         {opciones.map(({ valor, nombre }) => (
           <button
@@ -66,7 +66,7 @@ export default function FormGasto() {
               setError(null);
               setListo(null);
             }}
-            className={`rounded-2xl px-1.5 py-2.5 text-xs font-bold leading-tight transition ${
+            className={`rounded-2xl px-1.5 py-2.5 text-sm font-bold leading-tight transition ${
               tipo === valor
                 ? "bg-gradient-to-r from-lila-500 to-rosa-400 text-white shadow"
                 : "bg-lila-50 text-lila-600"

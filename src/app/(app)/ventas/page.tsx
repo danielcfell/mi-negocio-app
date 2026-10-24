@@ -10,6 +10,7 @@ export default async function Ventas() {
     .from("ventas_detalle")
     .select("*")
     .order("fecha", { ascending: false })
+    .order("creada", { ascending: false })
     .limit(100);
 
   const ventas = (data ?? []) as VentaDetalle[];

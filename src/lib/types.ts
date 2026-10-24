@@ -11,6 +11,9 @@ export type ProductoStock = {
   precio_venta: number;
   ganancia_unidad: number;
   fecha_compra: string;
+  /** Ventas registradas, incluidas las anuladas */
+  num_ventas: number;
+  creado: string;
 };
 
 export type VentaDetalle = {
@@ -26,6 +29,7 @@ export type VentaDetalle = {
   producto_id: string;
   producto: string;
   ganancia: number;
+  creada: string;
 };
 
 export type Gasto = {

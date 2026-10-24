@@ -74,7 +74,7 @@ export default function FormVenta({
   }
 
   return (
-    <form onSubmit={guardar} className="space-y-4">
+    <form onSubmit={guardar} noValidate className="space-y-4">
       <section className="tarjeta space-y-3">
         <div>
           <label className="etiqueta" htmlFor="producto">
@@ -103,8 +103,6 @@ export default function FormVenta({
               id="cantidad"
               type="number"
               inputMode="numeric"
-              min="1"
-              max={producto?.stock}
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               className="campo"

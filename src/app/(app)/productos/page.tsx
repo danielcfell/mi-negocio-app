@@ -10,6 +10,7 @@ export default async function Productos() {
     .from("productos_stock")
     .select("*")
     .order("fecha_compra", { ascending: false })
+    .order("creado", { ascending: false })
     .order("nombre");
 
   const productos = (data ?? []) as ProductoStock[];
@@ -94,14 +95,14 @@ function TarjetaProducto({ p }: { p: ProductoStock }) {
         <p className="mt-1 text-sm text-lila-700">
           Costo {dinero(p.costo_real)} → vendo a <strong>{dinero(p.precio_venta)}</strong>
         </p>
-        <div className="mt-2 flex items-center justify-between">
-          <span
-            className={`text-sm font-extrabold ${
-              p.ganancia_unidad >= 0 ? "text-ganancia" : "text-deuda"
-            }`}
-          >
-            Gano {dinero(p.ganancia_unidad)} c/u
-          </span>
+        <p
+          className={`text-sm font-extrabold ${
+            p.ganancia_unidad >= 0 ? "text-ganancia" : "text-deuda"
+          }`}
+        >
+          Gano {dinero(p.ganancia_unidad)} c/u
+        </p>
+        <div className="mt-2 flex items-center justify-end">
           <div className="flex items-center gap-2">
             <Link
               href={`/productos/${p.id}`}

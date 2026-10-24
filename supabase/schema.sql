@@ -176,7 +176,9 @@ select
   round(p.costo_unitario + c.transporte / nullif(t.unidades, 0), 2) as costo_real,
   p.precio_venta,
   round(p.precio_venta - (p.costo_unitario + c.transporte / nullif(t.unidades, 0)), 2) as ganancia_unidad,
-  c.fecha                                              as fecha_compra
+  c.fecha                                              as fecha_compra,
+  coalesce(v.num_ventas, 0)                            as num_ventas,
+  p.created_at                                         as creado
 from public.productos p
 join public.compras c on c.id = p.compra_id
 join (
@@ -185,9 +187,10 @@ join (
   group by compra_id
 ) t on t.compra_id = p.compra_id
 left join (
-  select producto_id, sum(cantidad) as vendido
+  select producto_id,
+         sum(cantidad) filter (where not anulada) as vendido,
+         count(*) as num_ventas
   from public.ventas
-  where not anulada
   group by producto_id
 ) v on v.producto_id = p.id;
 
@@ -206,7 +209,8 @@ select
   v.anulada,
   ps.id                                         as producto_id,
   ps.nombre                                     as producto,
-  round(v.cantidad * (v.precio - ps.costo_real), 2) as ganancia
+  round(v.cantidad * (v.precio - ps.costo_real), 2) as ganancia,
+  v.created_at                                  as creada
 from public.ventas v
 join public.productos_stock ps on ps.id = v.producto_id;
 
@@ -273,5 +277,7 @@ on conflict (id) do nothing;
 
 create policy "subir mis fotos" on storage.objects for insert to authenticated
   with check (bucket_id = 'productos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy "ver mis fotos" on storage.objects for select to authenticated
+  using (bucket_id = 'productos' and (storage.foldername(name))[1] = (select auth.uid())::text);
 create policy "borrar mis fotos" on storage.objects for delete to authenticated
   using (bucket_id = 'productos' and (storage.foldername(name))[1] = (select auth.uid())::text);

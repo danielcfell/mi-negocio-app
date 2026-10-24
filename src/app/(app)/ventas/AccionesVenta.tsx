@@ -48,7 +48,14 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
   return (
     <div className="mt-3 space-y-2 border-t border-lila-100 pt-3">
       {abonando ? (
-        <div className="flex gap-2">
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            abonar();
+          }}
+          className="flex gap-2"
+        >
           <input
             aria-label="Monto del abono"
             type="text"
@@ -60,10 +67,11 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
             placeholder={`Hasta ${dinero(venta.saldo)}`}
             className="campo py-2"
           />
-          <button onClick={abonar} disabled={ocupado} className="boton-suave shrink-0">
+          <button type="submit" disabled={ocupado} className="boton-suave shrink-0">
             Guardar
           </button>
           <button
+            type="button"
             onClick={() => {
               setAbonando(false);
               setError(null);
@@ -72,7 +80,7 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
           >
             Cancelar
           </button>
-        </div>
+        </form>
       ) : (
         <div className="flex gap-2">
           {venta.saldo > 0 && (
