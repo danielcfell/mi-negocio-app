@@ -17,12 +17,12 @@ export default function LoginPage() {
     setCargando(true);
     setError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: correo.trim(),
-      password: clave,
-    });
+    // Se puede entrar solo con el usuario (ej. "maryu"); por dentro se usa usuario@mi-negocio.app
+    const usuario = correo.trim().toLowerCase();
+    const email = usuario.includes("@") ? usuario : `${usuario}@mi-negocio.app`;
+    const { error } = await supabase.auth.signInWithPassword({ email, password: clave });
     if (error) {
-      setError("Correo o contraseña incorrectos.");
+      setError("Usuario o contraseña incorrectos.");
       setCargando(false);
       return;
     }
@@ -44,17 +44,19 @@ export default function LoginPage() {
       <form onSubmit={entrar} className="tarjeta space-y-4">
         <div>
           <label htmlFor="correo" className="etiqueta">
-            Correo
+            Usuario
           </label>
           <input
             id="correo"
-            type="email"
-            autoComplete="email"
+            type="text"
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoComplete="username"
             required
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             className="campo"
-            placeholder="tucorreo@ejemplo.com"
+            placeholder="Tu usuario"
           />
         </div>
         <div>
