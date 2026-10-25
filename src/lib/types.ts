@@ -14,6 +14,7 @@ export type ProductoStock = {
   /** Ventas registradas, incluidas las anuladas */
   num_ventas: number;
   creado: string;
+  eliminado: boolean;
 };
 
 export type VentaDetalle = {

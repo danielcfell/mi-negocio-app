@@ -9,6 +9,7 @@ export default async function Productos() {
   const { data, error } = await supabase
     .from("productos_stock")
     .select("*")
+    .eq("eliminado", false)
     .order("fecha_compra", { ascending: false })
     .order("creado", { ascending: false })
     .order("nombre");

@@ -21,6 +21,7 @@ create table public.productos (
   cantidad        integer not null check (cantidad > 0),
   costo_unitario  numeric(12,2) not null check (costo_unitario >= 0),
   precio_venta    numeric(12,2) not null check (precio_venta >= 0),
+  eliminado       boolean not null default false,  -- oculto, pero sus ventas se conservan
   created_at      timestamptz not null default now()
 );
 
@@ -89,14 +90,18 @@ as $$
 declare
   comprado integer;
   vendido  integer;
+  borrado  boolean;
 begin
   if new.anulada then
     return new;
   end if;
 
-  select cantidad into comprado from public.productos where id = new.producto_id;
+  select cantidad, eliminado into comprado, borrado from public.productos where id = new.producto_id;
   if comprado is null then
     raise exception 'Producto no encontrado';
+  end if;
+  if tg_op = 'INSERT' and borrado then
+    raise exception 'Este producto fue eliminado; ya no se puede vender';
   end if;
 
   select coalesce(sum(cantidad), 0) into vendido
@@ -178,7 +183,8 @@ select
   round(p.precio_venta - (p.costo_unitario + c.transporte / nullif(t.unidades, 0)), 2) as ganancia_unidad,
   c.fecha                                              as fecha_compra,
   coalesce(v.num_ventas, 0)                            as num_ventas,
-  p.created_at                                         as creado
+  p.created_at                                         as creado,
+  p.eliminado
 from public.productos p
 join public.compras c on c.id = p.compra_id
 join (
@@ -249,6 +255,7 @@ as $$
   stock as (
     select coalesce(sum(stock * costo_real), 0) as valor
     from public.productos_stock
+    where not eliminado
   ),
   caja as (
     select

@@ -7,7 +7,7 @@ import EditarProducto from "./EditarProducto";
 export default async function CorregirProducto({ params }: PageProps<"/productos/[id]">) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data } = await supabase.from("productos_stock").select("*").eq("id", id).maybeSingle();
+  const { data } = await supabase.from("productos_stock").select("*").eq("id", id).eq("eliminado", false).maybeSingle();
   const producto = data as ProductoStock | null;
 
   return (

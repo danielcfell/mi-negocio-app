@@ -18,7 +18,7 @@ export function centavos(valor: number): number {
 /** Traduce errores de la base de datos a mensajes entendibles. */
 export function mensajeError(error: { message?: string } | null | undefined): string {
   const texto = error?.message ?? "";
-  if (texto.includes("No hay stock suficiente") || texto.includes("Ya vendiste") || texto.includes("Producto no encontrado")) {
+  if (texto.includes("No hay stock suficiente") || texto.includes("Ya vendiste") || texto.includes("Producto no encontrado") || texto.includes("fue eliminado")) {
     return texto;
   }
   if (texto.includes("abono_no_supera_total")) return "El abono no puede ser mayor que el total de la venta.";

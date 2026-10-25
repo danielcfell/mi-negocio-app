@@ -48,10 +48,33 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
   }
 
   async function eliminar() {
-    if (!window.confirm(`¿Eliminar “${producto.nombre}”? Esto no se puede deshacer.`)) return;
+    const tieneVentas = producto.num_ventas > 0;
+    const aviso = tieneVentas
+      ? `¿Eliminar “${producto.nombre}”? Desaparecerá de tus productos y ya no podrás venderlo. ` +
+        `Sus ventas quedan registradas y tu ganancia no cambia.` +
+        (producto.stock > 0
+          ? ` Las ${producto.stock} unidades que quedan dejarán de contar como mercadería.`
+          : "")
+      : `¿Eliminar “${producto.nombre}”? Esto no se puede deshacer.`;
+    if (!window.confirm(aviso)) return;
     setOcupado(true);
     setError(null);
     const supabase = createClient();
+
+    if (tieneVentas) {
+      // Se oculta, pero sigue existiendo para que sus ventas conserven su costo.
+      const { error } = await supabase
+        .from("productos")
+        .update({ eliminado: true })
+        .eq("id", producto.id);
+      if (error) {
+        setOcupado(false);
+        return setError(mensajeError(error));
+      }
+      router.replace("/productos");
+      router.refresh();
+      return;
+    }
 
     const { error } = await supabase.from("productos").delete().eq("id", producto.id);
     if (error) {
@@ -145,18 +168,16 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
         </button>
       </form>
 
-      {producto.num_ventas === 0 ? (
-        <button
-          onClick={eliminar}
-          disabled={ocupado}
-          className="w-full rounded-2xl px-4 py-3 text-sm font-bold text-rosa-500 ring-1 ring-rosa-200"
-        >
-          Eliminar producto
-        </button>
-      ) : (
+      <button
+        onClick={eliminar}
+        disabled={ocupado}
+        className="w-full rounded-2xl px-4 py-3 text-sm font-bold text-rosa-500 ring-1 ring-rosa-200"
+      >
+        Eliminar producto
+      </button>
+      {producto.num_ventas > 0 && (
         <p className="text-center text-xs text-lila-400">
-          Este producto tiene ventas registradas (aunque estén anuladas), por eso no se puede
-          eliminar y queda en tu historial.
+          Tiene ventas registradas: al eliminarlo, esas ventas se conservan y tu ganancia no cambia.
         </p>
       )}
     </div>

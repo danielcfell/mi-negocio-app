@@ -13,6 +13,7 @@ export default async function NuevaVenta({
   const { data } = await supabase
     .from("productos_stock")
     .select("*")
+    .eq("eliminado", false)
     .gt("stock", 0)
     .order("nombre");
 
