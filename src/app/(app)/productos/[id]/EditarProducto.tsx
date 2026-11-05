@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Camera, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { centavos, dinero, mensajeError, numero } from "@/lib/format";
 import type { ProductoStock } from "@/lib/types";
+import { reducirImagen } from "@/lib/imagen";
+import { avisoEliminar, borrarFoto, eliminarProducto } from "../EliminarProducto";
 
 export default function EditarProducto({ producto }: { producto: ProductoStock }) {
   const router = useRouter();
@@ -12,6 +15,8 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
   const [cantidad, setCantidad] = useState(String(producto.comprado));
   const [costo, setCosto] = useState(String(producto.costo_unitario));
   const [precio, setPrecio] = useState(String(producto.precio_venta));
+  const [foto, setFoto] = useState<File | null>(null);
+  const [vista, setVista] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -32,79 +37,91 @@ export default function EditarProducto({ producto }: { producto: ProductoStock }
     }
 
     setOcupado(true);
-    const { error } = await createClient()
-      .from("productos")
-      .update({
-        nombre: nombre.trim(),
-        cantidad: cant,
-        costo_unitario: costoNum,
-        precio_venta: precioNum,
-      })
-      .eq("id", producto.id);
+    const supabase = createClient();
+    const cambios: Record<string, string | number> = {
+      nombre: nombre.trim(),
+      cantidad: cant,
+      costo_unitario: costoNum,
+      precio_venta: precioNum,
+    };
+
+    let rutaNueva: string | null = null;
+    if (foto) {
+      try {
+        const { data: usuario } = await supabase.auth.getUser();
+        if (!usuario.user) throw new Error("Tu sesión expiró. Vuelve a entrar.");
+        const imagen = await reducirImagen(foto);
+        rutaNueva = `${usuario.user.id}/${crypto.randomUUID()}.jpg`;
+        const { error: errFoto } = await supabase.storage
+          .from("productos")
+          .upload(rutaNueva, imagen, { contentType: "image/jpeg" });
+        if (errFoto) throw new Error("No se pudo subir la foto. Intenta de nuevo.");
+        cambios.foto_url = supabase.storage.from("productos").getPublicUrl(rutaNueva).data.publicUrl;
+      } catch (e) {
+        setOcupado(false);
+        return setError(e instanceof Error ? e.message : "No se pudo procesar la foto.");
+      }
+    }
+
+    const { error } = await supabase.from("productos").update(cambios).eq("id", producto.id);
+    if (error) {
+      if (rutaNueva) await supabase.storage.from("productos").remove([rutaNueva]);
+      setOcupado(false);
+      return setError(mensajeError(error));
+    }
+    if (rutaNueva) await borrarFoto(producto.foto_url);
     setOcupado(false);
-    if (error) return setError(mensajeError(error));
     router.replace("/productos");
     router.refresh();
   }
 
   async function eliminar() {
-    const tieneVentas = producto.num_ventas > 0;
-    const aviso = tieneVentas
-      ? `¿Eliminar “${producto.nombre}”? Desaparecerá de tus productos y ya no podrás venderlo. ` +
-        `Sus ventas quedan registradas y tu ganancia no cambia.` +
-        (producto.stock > 0
-          ? ` Las ${producto.stock} unidades que quedan dejarán de contar como mercadería.`
-          : "")
-      : `¿Eliminar “${producto.nombre}”? Esto no se puede deshacer.`;
-    if (!window.confirm(aviso)) return;
+    if (!window.confirm(avisoEliminar(producto))) return;
     setOcupado(true);
     setError(null);
-    const supabase = createClient();
-
-    if (tieneVentas) {
-      // Se oculta, pero sigue existiendo para que sus ventas conserven su costo.
-      const { error } = await supabase
-        .from("productos")
-        .update({ eliminado: true })
-        .eq("id", producto.id);
-      if (error) {
-        setOcupado(false);
-        return setError(mensajeError(error));
-      }
-      router.replace("/productos");
-      router.refresh();
-      return;
-    }
-
-    const { error } = await supabase.from("productos").delete().eq("id", producto.id);
-    if (error) {
+    const msg = await eliminarProducto(producto);
+    if (msg) {
       setOcupado(false);
-      return setError(mensajeError(error));
+      return setError(msg);
     }
-
-    // Borrar la foto guardada, si tenía
-    if (producto.foto_url) {
-      const marca = "/storage/v1/object/public/productos/";
-      const i = producto.foto_url.indexOf(marca);
-      if (i >= 0) {
-        await supabase.storage.from("productos").remove([producto.foto_url.slice(i + marca.length)]);
-      }
-    }
-
-    // Si la compra quedó sin productos, también se borra (y con ella su transporte)
-    const { count } = await supabase
-      .from("productos")
-      .select("id", { count: "exact", head: true })
-      .eq("compra_id", producto.compra_id);
-    if (count === 0) await supabase.from("compras").delete().eq("id", producto.compra_id);
-
     router.replace("/productos");
     router.refresh();
   }
 
+  function elegirFoto(archivo: File | null) {
+    if (vista) URL.revokeObjectURL(vista);
+    setFoto(archivo);
+    setVista(archivo ? URL.createObjectURL(archivo) : null);
+  }
+
+  const fotoMostrada = vista ?? producto.foto_url;
+
   return (
     <div className="space-y-4">
       <form onSubmit={guardar} noValidate className="tarjeta space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-lila-50">
+            {fotoMostrada ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={fotoMostrada} alt={producto.nombre} className="h-full w-full object-cover" />
+            ) : (
+              <div className="grid h-full w-full place-items-center text-lila-200">
+                <ImageIcon className="h-7 w-7" />
+              </div>
+            )}
+          </div>
+          <label className="boton-suave cursor-pointer">
+            <Camera className="h-4 w-4" />
+            <span>{producto.foto_url || foto ? "Cambiar foto" : "Agregar foto"}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => elegirFoto(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+
         <div>
           <label className="etiqueta" htmlFor="nombre">
             Nombre

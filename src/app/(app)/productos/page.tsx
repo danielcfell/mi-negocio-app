@@ -3,6 +3,7 @@ import { ImageIcon, PackagePlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { dinero, fechaCorta } from "@/lib/format";
 import type { ProductoStock } from "@/lib/types";
+import EliminarProducto from "./EliminarProducto";
 
 export default async function Productos() {
   const supabase = await createClient();
@@ -105,6 +106,7 @@ function TarjetaProducto({ p }: { p: ProductoStock }) {
         </p>
         <div className="mt-2 flex items-center justify-end">
           <div className="flex items-center gap-2">
+            <EliminarProducto producto={p} />
             <Link
               href={`/productos/${p.id}`}
               className="rounded-full px-3 py-1.5 text-xs font-bold text-lila-500 ring-1 ring-lila-200"
