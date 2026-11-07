@@ -31,6 +31,8 @@ export type VentaDetalle = {
   producto: string;
   ganancia: number;
   creada: string;
+  /** Quitada de la lista; sigue contando en los números */
+  oculta: boolean;
 };
 
 export type Gasto = {

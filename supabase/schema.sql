@@ -35,6 +35,7 @@ create table public.ventas (
   cliente      text,
   abonado      numeric(12,2) not null default 0 check (abonado >= 0),
   anulada      boolean not null default false,
+  oculta       boolean not null default false,   -- quitada de la lista (sigue contando en los números)
   created_at   timestamptz not null default now()
 );
 
@@ -216,7 +217,8 @@ select
   ps.id                                         as producto_id,
   ps.nombre                                     as producto,
   round(v.cantidad * (v.precio - ps.costo_real), 2) as ganancia,
-  v.created_at                                  as creada
+  v.created_at                                  as creada,
+  v.oculta
 from public.ventas v
 join public.productos_stock ps on ps.id = v.producto_id;
 

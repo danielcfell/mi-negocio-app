@@ -45,6 +45,40 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
     router.refresh();
   }
 
+  async function quitar() {
+    const aviso = venta.anulada
+      ? "¿Quitar esta venta anulada de la lista?"
+      : "¿Quitar esta venta de la lista? El producto NO vuelve al stock y el dinero y la ganancia siguen contando.";
+    if (!window.confirm(aviso)) return;
+    setOcupado(true);
+    const { error } = await createClient()
+      .from("ventas")
+      .update({ oculta: true })
+      .eq("id", venta.id);
+    setOcupado(false);
+    if (error) return setError(mensajeError(error));
+    router.refresh();
+  }
+
+  const botonQuitar = (
+    <button
+      onClick={quitar}
+      disabled={ocupado}
+      className="rounded-2xl px-4 py-2.5 text-sm font-bold text-lila-500 ring-1 ring-lila-200"
+    >
+      Quitar de la lista
+    </button>
+  );
+
+  if (venta.anulada) {
+    return (
+      <div className="mt-3 space-y-2 border-t border-lila-100 pt-3">
+        <div className="flex">{botonQuitar}</div>
+        {error && <p className="text-xs text-deuda">{error}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 space-y-2 border-t border-lila-100 pt-3">
       {abonando ? (
@@ -95,6 +129,7 @@ export default function AccionesVenta({ venta }: { venta: VentaDetalle }) {
           >
             Anular
           </button>
+          {venta.saldo <= 0 && botonQuitar}
         </div>
       )}
       {error && <p className="text-xs text-deuda">{error}</p>}

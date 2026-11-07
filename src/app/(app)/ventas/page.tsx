@@ -9,6 +9,7 @@ export default async function Ventas() {
   const { data, error } = await supabase
     .from("ventas_detalle")
     .select("*")
+    .eq("oculta", false)
     .order("fecha", { ascending: false })
     .order("creada", { ascending: false })
     .limit(100);
@@ -75,7 +76,7 @@ export default async function Ventas() {
             {!v.anulada && (
               <p className="mt-1 text-xs text-lila-500">Ganancia {dinero(v.ganancia)}</p>
             )}
-            {!v.anulada && <AccionesVenta venta={v} />}
+            <AccionesVenta venta={v} />
           </li>
         ))}
       </ul>
