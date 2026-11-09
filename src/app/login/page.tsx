@@ -17,7 +17,7 @@ export default function LoginPage() {
     setCargando(true);
     setError(null);
     const supabase = createClient();
-    // Se puede entrar solo con el usuario (ej. "maryu"); por dentro se usa usuario@minegocio.app
+    // Se puede entrar solo con el usuario (ej. "maria"); por dentro se usa usuario@minegocio.app
     const usuario = correo.trim().toLowerCase();
     const email = usuario.includes("@") ? usuario : `${usuario}@minegocio.app`;
     const { error } = await supabase.auth.signInWithPassword({ email, password: clave });
